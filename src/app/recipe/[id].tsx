@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   section: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  title: { fontSize: 32, fontWeight: "800", color: colors.text },
+  title: { fontSize: 28, fontWeight: "800", color: colors.text },
   summary: { fontSize: fontSizes.md, color: colors.textMuted, lineHeight: 22 },
   stats: {
     flexDirection: "row",

@@ -41,8 +41,15 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             />
           </View>
           <View style={styles.body}>
-            <Text style={styles.title}>{recipe.title}</Text>
-            <Text style={styles.summary} numberOfLines={3}>
+            <Text
+              style={styles.title}
+              numberOfLines={2}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              {recipe.title}
+            </Text>
+            <Text style={styles.summary} numberOfLines={4}>
               {recipe.summary}
             </Text>
             <View style={styles.metaRow}>
@@ -91,7 +98,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.lg,
     fontWeight: "700",
     color: colors.text,
   },
@@ -114,7 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   badgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   link: {
