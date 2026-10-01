@@ -8,6 +8,7 @@ export const colors = {
   cream: "#FBF5EA",
   card: "#FFFFFF",
   accent: "#9A5B2E",
+  star: "#E8A317",
 } as const;
 
 export const spacing = {

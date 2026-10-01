@@ -14,11 +14,14 @@ import {
   fontSizes,
   spacing,
 } from "@/constants/tokens";
+import { useFavorites } from "@/context/favorites";
 import type { Recipe } from "@/data/recipes";
 
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const badge = difficultyColors[recipe.difficulty];
   const { width } = useWindowDimensions();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(recipe.id);
   // Photos are square: size the column from the screen width so the whole
   // dish stays in view, and keep the card at least as tall as the column.
   const imageSize = Math.min(
@@ -27,12 +30,14 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
   );
 
   return (
-    <Link
-      href={{ pathname: "/recipe/[id]", params: { id: recipe.id } }}
-      asChild
-    >
-      <Pressable style={styles.shadow}>
-        <View style={[styles.card, { minHeight: imageSize }]}>
+    <View style={styles.shadow}>
+      <Link
+        href={{ pathname: "/recipe/[id]", params: { id: recipe.id } }}
+        asChild
+      >
+        <Pressable
+          style={StyleSheet.flatten([styles.card, { minHeight: imageSize }])}
+        >
           <View style={{ width: imageSize }}>
             <Image
               source={recipe.image}
@@ -64,9 +69,25 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
             </View>
             <Text style={styles.link}>View recipe ›</Text>
           </View>
-        </View>
+        </Pressable>
+      </Link>
+      <Pressable
+        style={styles.star}
+        hitSlop={8}
+        onPress={() => toggleFavorite(recipe.id)}
+        accessibilityRole="button"
+        accessibilityLabel={
+          favorite
+            ? `Remove ${recipe.title} from favorites`
+            : `Add ${recipe.title} to favorites`
+        }
+        accessibilityState={{ selected: favorite }}
+      >
+        <Text style={[styles.starIcon, favorite && styles.starIconActive]}>
+          {favorite ? "★" : "☆"}
+        </Text>
       </Pressable>
-    </Link>
+    </View>
   );
 }
 
@@ -98,7 +119,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
-    fontSize: fontSizes.lg,
+    marginRight: 24,
+    fontSize: 17,
     fontWeight: "700",
     color: colors.text,
   },
@@ -123,6 +145,25 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: "600",
+  },
+  star: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.card,
+  },
+  starIcon: {
+    fontSize: 22,
+    lineHeight: 26,
+    color: colors.textMuted,
+  },
+  starIconActive: {
+    color: colors.star,
   },
   link: {
     fontSize: fontSizes.sm,
