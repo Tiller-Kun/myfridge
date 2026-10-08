@@ -9,6 +9,9 @@ export const colors = {
   card: "#FFFFFF",
   accent: "#9A5B2E",
   star: "#E8A317",
+  success: "#2F6B3A",
+  missing: "#9B3A32",
+  onAccent: "#FFFFFF",
 } as const;
 
 export const spacing = {
@@ -20,10 +23,13 @@ export const spacing = {
 } as const;
 
 export const fontSizes = {
+  xs: 11,
   sm: 13,
   md: 15,
+  card: 16,
   lg: 18,
   xl: 24,
+  xxl: 28,
 } as const;
 
 export const difficultyColors = {

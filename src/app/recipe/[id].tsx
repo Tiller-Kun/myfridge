@@ -14,6 +14,7 @@ import {
   fontSizes,
   spacing,
 } from "@/constants/tokens";
+import { usePantry } from "@/context/pantry";
 import { RECIPES } from "@/data/recipes";
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -28,6 +29,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width, height } = useWindowDimensions();
+  const { hasItem } = usePantry();
   const recipe = RECIPES.find((r) => r.id === id);
 
   if (!recipe) {
@@ -39,6 +41,8 @@ export default function RecipeDetailScreen() {
   }
 
   const badge = difficultyColors[recipe.difficulty];
+  // Derived on every render from the pantry, never stored.
+  const haveCount = recipe.ingredients.filter((i) => hasItem(i.name)).length;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -71,15 +75,27 @@ export default function RecipeDetailScreen() {
 
       <View style={styles.section}>
         <Text style={styles.heading}>Ingredients</Text>
-        {recipe.ingredients.map((item) => (
-          <View key={item.name} style={styles.ingredientRow}>
-            <Text style={styles.ingredientName}>{item.name}</Text>
-            <Text style={styles.ingredientAmount}>
-              {item.quantity}
-              {item.unit ? ` ${item.unit}` : ""}
-            </Text>
-          </View>
-        ))}
+        <Text style={styles.pantrySummary}>
+          You have {haveCount} of {recipe.ingredients.length} ingredients.
+        </Text>
+        {recipe.ingredients.map((item) => {
+          const have = hasItem(item.name);
+          return (
+            <View key={item.name} style={styles.ingredientRow}>
+              <Text
+                style={[styles.statusIcon, have ? styles.have : styles.missing]}
+                accessibilityLabel={have ? "In pantry" : "Missing"}
+              >
+                {have ? "✓" : "✕"}
+              </Text>
+              <Text style={styles.ingredientName}>{item.name}</Text>
+              <Text style={styles.ingredientAmount}>
+                {item.quantity}
+                {item.unit ? ` ${item.unit}` : ""}
+              </Text>
+            </View>
+          );
+        })}
       </View>
 
       <View style={styles.section}>
@@ -107,7 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   section: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  title: { fontSize: 28, fontWeight: "800", color: colors.text },
+  title: { fontSize: fontSizes.xxl, fontWeight: "800", color: colors.text },
   summary: { fontSize: fontSizes.md, color: colors.textMuted, lineHeight: 22 },
   stats: {
     flexDirection: "row",
@@ -132,7 +148,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  pantrySummary: { fontSize: fontSizes.sm, color: colors.textMuted },
+  statusIcon: { width: 20, fontSize: fontSizes.md, fontWeight: "700" },
+  have: { color: colors.success },
+  missing: { color: colors.missing },
   ingredientName: {
+    flex: 1,
     fontSize: fontSizes.sm,
     color: colors.text,
     textTransform: "capitalize",
