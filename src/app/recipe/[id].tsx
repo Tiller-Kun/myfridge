@@ -14,6 +14,7 @@ import {
   fontSizes,
   spacing,
 } from "@/constants/tokens";
+import { PantryLoadError, PantryLoading } from "@/components/pantry-status";
 import { usePantry } from "@/context/pantry";
 import { RECIPES } from "@/data/recipes";
 
@@ -29,7 +30,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width, height } = useWindowDimensions();
-  const { hasItem } = usePantry();
+  const { hasItem, status, hasLoaded, reload } = usePantry();
   const recipe = RECIPES.find((r) => r.id === id);
 
   if (!recipe) {
@@ -38,6 +39,14 @@ export default function RecipeDetailScreen() {
         <Text style={styles.summary}>Recipe not found.</Text>
       </View>
     );
+  }
+
+  // Wait for pantry data before comparing it with the ingredients.
+  if (!hasLoaded && status === "loading") {
+    return <PantryLoading background={colors.background} />;
+  }
+  if (!hasLoaded && status === "error") {
+    return <PantryLoadError background={colors.background} onRetry={reload} />;
   }
 
   const badge = difficultyColors[recipe.difficulty];

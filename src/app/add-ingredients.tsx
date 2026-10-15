@@ -1,5 +1,5 @@
 import { Stack, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, fontSizes, spacing } from "@/constants/tokens";
@@ -8,7 +8,13 @@ import { ALL_INGREDIENT_NAMES } from "@/data/recipes";
 
 export default function AddIngredientsModal() {
   const router = useRouter();
-  const { hasItem, addItems } = usePantry();
+  const { hasItem, addItems, busy, actionError, clearActionError } =
+    usePantry();
+  // Don't show a stale error from an earlier pantry action.
+  useEffect(() => {
+    clearActionError();
+  }, [clearActionError]);
+
   // Local draft: only committed to the pantry when Done is pressed.
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
 
@@ -19,10 +25,13 @@ export default function AddIngredientsModal() {
       return next;
     });
 
-  const close = () => router.back();
-  const done = () => {
-    addItems([...selected]);
+  const close = () => {
+    clearActionError();
     router.back();
+  };
+  const done = async () => {
+    // Close only after Supabase confirms; on failure stay open with the error.
+    if (await addItems([...selected])) router.back();
   };
 
   return (
@@ -42,15 +51,19 @@ export default function AddIngredientsModal() {
           headerRight: () => (
             <Pressable
               onPress={done}
+              disabled={busy}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Done"
             >
-              <Text style={styles.done}>Done</Text>
+              <Text style={[styles.done, busy && styles.doneBusy]}>
+                {busy ? "Saving…" : "Done"}
+              </Text>
             </Pressable>
           ),
         }}
       />
+      {actionError && <Text style={styles.error}>{actionError}</Text>}
       <FlatList
         data={ALL_INGREDIENT_NAMES}
         keyExtractor={(name) => name}
@@ -92,6 +105,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.accent,
     paddingHorizontal: spacing.md,
+  },
+  doneBusy: { opacity: 0.5 },
+  error: {
+    fontSize: fontSizes.sm,
+    color: colors.missing,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
   row: {
     flexDirection: "row",
