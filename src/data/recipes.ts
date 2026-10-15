@@ -191,3 +191,8 @@ export const RECIPES: Recipe[] = [
     ],
   },
 ];
+
+/** Every distinct recipe ingredient name, sorted: the Pantry's allowed choices. */
+export const ALL_INGREDIENT_NAMES: string[] = Array.from(
+  new Set(RECIPES.flatMap((recipe) => recipe.ingredients.map((i) => i.name))),
+).sort();

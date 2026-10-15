@@ -1,0 +1,123 @@
+import { Stack, useRouter } from "expo-router";
+import { useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+
+import { colors, fontSizes, spacing } from "@/constants/tokens";
+import { usePantry } from "@/context/pantry";
+import { ALL_INGREDIENT_NAMES } from "@/data/recipes";
+
+export default function AddIngredientsModal() {
+  const router = useRouter();
+  const { hasItem, addItems } = usePantry();
+  // Local draft: only committed to the pantry when Done is pressed.
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+
+  const toggle = (name: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(name)) next.add(name);
+      return next;
+    });
+
+  const close = () => router.back();
+  const done = () => {
+    addItems([...selected]);
+    router.back();
+  };
+
+  return (
+    <View style={styles.screen}>
+      <Stack.Screen
+        options={{
+          headerLeft: () => (
+            <Pressable
+              onPress={close}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={styles.close}>✕</Text>
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={done}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Done"
+            >
+              <Text style={styles.done}>Done</Text>
+            </Pressable>
+          ),
+        }}
+      />
+      <FlatList
+        data={ALL_INGREDIENT_NAMES}
+        keyExtractor={(name) => name}
+        contentContainerStyle={styles.content}
+        renderItem={({ item }) => {
+          const inPantry = hasItem(item);
+          const checked = inPantry || selected.has(item);
+          return (
+            <Pressable
+              style={[styles.row, inPantry && styles.rowDisabled]}
+              disabled={inPantry}
+              onPress={() => toggle(item)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked, disabled: inPantry }}
+            >
+              <View style={[styles.box, checked && styles.boxChecked]}>
+                {checked && <Text style={styles.tick}>✓</Text>}
+              </View>
+              <Text style={styles.name}>{item}</Text>
+              {inPantry && <Text style={styles.note}>In pantry</Text>}
+            </Pressable>
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.md, gap: spacing.xs },
+  close: {
+    fontSize: fontSizes.lg,
+    color: colors.text,
+    paddingHorizontal: spacing.md,
+  },
+  done: {
+    fontSize: fontSizes.md,
+    fontWeight: "600",
+    color: colors.accent,
+    paddingHorizontal: spacing.md,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  rowDisabled: { opacity: 0.5 },
+  box: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.textMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  boxChecked: { backgroundColor: colors.accent, borderColor: colors.accent },
+  tick: { color: colors.onAccent, fontSize: fontSizes.sm, fontWeight: "700" },
+  name: {
+    flex: 1,
+    fontSize: fontSizes.md,
+    color: colors.text,
+    textTransform: "capitalize",
+  },
+  note: { fontSize: fontSizes.sm, color: colors.textMuted },
+});

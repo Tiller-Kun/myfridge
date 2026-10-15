@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginRight: 24,
-    fontSize: 17,
+    fontSize: fontSizes.card,
     fontWeight: "700",
     color: colors.text,
   },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: fontSizes.xs,
     fontWeight: "600",
   },
   star: {
