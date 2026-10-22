@@ -1,4 +1,5 @@
 import { Stack, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -15,6 +16,8 @@ import {
   spacing,
 } from "@/constants/tokens";
 import { PantryLoadError, PantryLoading } from "@/components/pantry-status";
+import { PrimaryButton } from "@/components/primary-button";
+import { useGroceries } from "@/context/groceries";
 import { usePantry } from "@/context/pantry";
 import { RECIPES } from "@/data/recipes";
 
@@ -31,6 +34,11 @@ export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width, height } = useWindowDimensions();
   const { hasItem, status, hasLoaded, reload } = usePantry();
+  const { addMissing, busy } = useGroceries();
+  const [feedback, setFeedback] = useState<{
+    kind: "success" | "error";
+    text: string;
+  } | null>(null);
   const recipe = RECIPES.find((r) => r.id === id);
 
   if (!recipe) {
@@ -48,6 +56,29 @@ export default function RecipeDetailScreen() {
   if (!hasLoaded && status === "error") {
     return <PantryLoadError background={colors.background} onRetry={reload} />;
   }
+
+  const missing = recipe.ingredients.filter((i) => !hasItem(i.name));
+
+  const addMissingToGroceries = async () => {
+    setFeedback(null);
+    const added = await addMissing(missing.map((i) => i.name));
+    if (added === null) {
+      setFeedback({
+        kind: "error",
+        text: "Couldn’t add to your grocery list. Please try again.",
+      });
+    } else if (added.length === 0) {
+      setFeedback({
+        kind: "success",
+        text: "Nothing new to add. These are already on your grocery list.",
+      });
+    } else {
+      setFeedback({
+        kind: "success",
+        text: `Added ${added.length} ${added.length === 1 ? "ingredient" : "ingredients"} to your grocery list.`,
+      });
+    }
+  };
 
   const badge = difficultyColors[recipe.difficulty];
   // Derived on every render from the pantry, never stored.
@@ -87,6 +118,27 @@ export default function RecipeDetailScreen() {
         <Text style={styles.pantrySummary}>
           You have {haveCount} of {recipe.ingredients.length} ingredients.
         </Text>
+        {missing.length > 0 ? (
+          <PrimaryButton
+            label={busy ? "Adding…" : "Add Missing Ingredients"}
+            onPress={addMissingToGroceries}
+            disabled={busy}
+          />
+        ) : (
+          <Text style={styles.allSet}>
+            You have everything for this recipe.
+          </Text>
+        )}
+        {feedback && (
+          <Text
+            style={[
+              styles.feedback,
+              feedback.kind === "error" ? styles.missing : styles.have,
+            ]}
+          >
+            {feedback.text}
+          </Text>
+        )}
         {recipe.ingredients.map((item) => {
           const have = hasItem(item.name);
           return (
@@ -158,6 +210,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   pantrySummary: { fontSize: fontSizes.sm, color: colors.textMuted },
+  allSet: { fontSize: fontSizes.sm, fontWeight: "600", color: colors.success },
+  feedback: { fontSize: fontSizes.sm },
   statusIcon: { width: 20, fontSize: fontSizes.md, fontWeight: "700" },
   have: { color: colors.success },
   missing: { color: colors.missing },

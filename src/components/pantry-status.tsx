@@ -3,11 +3,17 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { PrimaryButton } from "@/components/primary-button";
 import { colors, fontSizes, spacing } from "@/constants/tokens";
 
-export function PantryLoading({ background }: { background: string }) {
+export function PantryLoading({
+  background,
+  subject = "pantry",
+}: {
+  background: string;
+  subject?: string;
+}) {
   return (
     <View style={[styles.center, { backgroundColor: background }]}>
       <ActivityIndicator color={colors.accent} />
-      <Text style={styles.text}>Loading your pantry…</Text>
+      <Text style={styles.text}>Loading your {subject}…</Text>
     </View>
   );
 }
@@ -15,13 +21,15 @@ export function PantryLoading({ background }: { background: string }) {
 export function PantryLoadError({
   background,
   onRetry,
+  subject = "pantry",
 }: {
   background: string;
   onRetry: () => void;
+  subject?: string;
 }) {
   return (
     <View style={[styles.center, { backgroundColor: background }]}>
-      <Text style={styles.title}>Couldn’t load your pantry</Text>
+      <Text style={styles.title}>Couldn’t load your {subject}</Text>
       <Text style={styles.text}>Check your connection and try again.</Text>
       <PrimaryButton label="Try again" onPress={onRetry} />
     </View>
@@ -29,10 +37,16 @@ export function PantryLoadError({
 }
 
 /** Inline notice for when a refresh failed but earlier data is still shown. */
-export function PantryStaleNotice({ onRetry }: { onRetry: () => void }) {
+export function PantryStaleNotice({
+  onRetry,
+  subject = "pantry",
+}: {
+  onRetry: () => void;
+  subject?: string;
+}) {
   return (
     <View style={styles.notice}>
-      <Text style={styles.noticeText}>Couldn’t refresh your pantry.</Text>
+      <Text style={styles.noticeText}>Couldn’t refresh your {subject}.</Text>
       <Text
         style={styles.noticeAction}
         onPress={onRetry}
@@ -40,6 +54,15 @@ export function PantryStaleNotice({ onRetry }: { onRetry: () => void }) {
       >
         Retry
       </Text>
+    </View>
+  );
+}
+
+/** Brief confirmation in the same card style as the notices; the caller hides it. */
+export function FlashNotice({ message }: { message: string }) {
+  return (
+    <View style={styles.notice} accessibilityLiveRegion="polite">
+      <Text style={[styles.noticeText, styles.flashText]}>{message}</Text>
     </View>
   );
 }
@@ -88,6 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     marginBottom: spacing.sm,
   },
+  flashText: { color: colors.success },
   noticeMessage: { flex: 1, marginRight: spacing.md },
   noticeText: { fontSize: fontSizes.sm, color: colors.missing },
   noticeAction: {

@@ -20,7 +20,8 @@ import type { Recipe } from "@/data/recipes";
 export function RecipeCard({ recipe }: { recipe: Recipe }) {
   const badge = difficultyColors[recipe.difficulty];
   const { width } = useWindowDimensions();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite, busy, hasLoaded } = useFavorites();
+  const starDisabled = busy || !hasLoaded;
   const favorite = isFavorite(recipe.id);
   // Photos are square: size the column from the screen width so the whole
   // dish stays in view, and keep the card at least as tall as the column.
@@ -75,15 +76,22 @@ export function RecipeCard({ recipe }: { recipe: Recipe }) {
         style={styles.star}
         hitSlop={8}
         onPress={() => toggleFavorite(recipe.id)}
+        disabled={starDisabled}
         accessibilityRole="button"
         accessibilityLabel={
           favorite
             ? `Remove ${recipe.title} from favorites`
             : `Add ${recipe.title} to favorites`
         }
-        accessibilityState={{ selected: favorite }}
+        accessibilityState={{ selected: favorite, disabled: starDisabled }}
       >
-        <Text style={[styles.starIcon, favorite && styles.starIconActive]}>
+        <Text
+          style={[
+            styles.starIcon,
+            favorite && styles.starIconActive,
+            starDisabled && styles.starIconBusy,
+          ]}
+        >
           {favorite ? "★" : "☆"}
         </Text>
       </Pressable>
@@ -161,6 +169,9 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 26,
     color: colors.textMuted,
+  },
+  starIconBusy: {
+    opacity: 0.5,
   },
   starIconActive: {
     color: colors.star,
