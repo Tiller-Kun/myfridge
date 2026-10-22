@@ -32,6 +32,11 @@ type PantryValue = {
   addItems: (names: readonly string[]) => Promise<boolean>;
   /** Deletes the row with this id. Resolves true on success. */
   removeItem: (id: string) => Promise<boolean>;
+  /**
+   * Saves names to the pantry, skipping any already there (upsert that ignores
+   * duplicates). Resolves true on success; names already saved count as saved.
+   */
+  saveNames: (names: readonly string[]) => Promise<boolean>;
 };
 
 const PantryContext = createContext<PantryValue | null>(null);
@@ -117,6 +122,37 @@ export function PantryProvider({ children }: { children: ReactNode }) {
     [items, runAction],
   );
 
+  const saveNames = useCallback(
+    async (names: readonly string[]) => {
+      const fresh = [...new Set(names)].filter(
+        (name) => !items.some((item) => item.name === name),
+      );
+      if (fresh.length === 0) return true;
+      try {
+        const { data, error } = await supabase
+          .from("pantry_items")
+          .upsert(
+            fresh.map((ingredient_name) => ({ ingredient_name })),
+            { onConflict: "ingredient_name", ignoreDuplicates: true },
+          )
+          .select("id, ingredient_name");
+        if (error || !data) return false;
+        const saved = data.map((row) => ({
+          id: String(row.id),
+          name: row.ingredient_name as string,
+        }));
+        setItems((prev) => [
+          ...prev,
+          ...saved.filter((row) => !prev.some((p) => p.id === row.id)),
+        ]);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [items],
+  );
+
   const removeItem = useCallback(
     (id: string) =>
       runAction(
@@ -148,6 +184,7 @@ export function PantryProvider({ children }: { children: ReactNode }) {
       clearActionError,
       addItems,
       removeItem,
+      saveNames,
     }),
     [
       items,
@@ -159,6 +196,7 @@ export function PantryProvider({ children }: { children: ReactNode }) {
       clearActionError,
       addItems,
       removeItem,
+      saveNames,
     ],
   );
 
